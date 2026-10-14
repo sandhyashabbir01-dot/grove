@@ -2,6 +2,7 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const { OAuth2Client } = require("google-auth-library");
 const User = require("../models/User");
 const publicUser = require("../utils/publicUser");
 const notify = require("../utils/notify");
@@ -59,11 +60,20 @@ router.get("/google/callback", async (req, res) => {
     const tj = await tr.json();
     if (!tr.ok || !tj.id_token) throw new Error(tj.error_description || "token exchange failed");
 
-    // the id_token came straight from Google over HTTPS, so its content can be trusted
-    const payload = JSON.parse(Buffer.from(tj.id_token.split(".")[1], "base64url").toString("utf8"));
-    if (payload.aud !== process.env.GOOGLE_CLIENT_ID || !payload.email || payload.email_verified === false) {
-      throw new Error("invalid google account");
+   
+    const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+    const googleTicket = await googleClient.verifyIdToken({
+      idToken: tj.id_token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = googleTicket.getPayload();
+
+    if (!payload || !payload.sub || !payload.email || payload.email_verified !== true) {
+      throw new Error("Invalid or unverified Google account");
     }
+
 
     const email = payload.email.toLowerCase();
     let user = await User.findOne({ email });

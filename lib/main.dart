@@ -15,7 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart'; // flutter pub add 
 // Android emulator                     : http://10.0.2.2:5000
 // Real phone on the same Wi-Fi         : http://<laptop-ip>:5000
 // After you deploy (live)              : https://your-app.onrender.com
-const String kApiBase =  'https://grove-api-qcm.vercel.app'
+const String kApiBase =  'https://grove-api-qcm.vercel.app';
 
 // Set to true ONLY after Google login is fully set up on the backend (Google Cloud + Vercel env vars).
 // While false, the "Continue with Google" buttons are hidden, so nobody sees a broken button.

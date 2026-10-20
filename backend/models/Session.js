@@ -7,6 +7,7 @@ const sessionSchema = new mongoose.Schema(
     status: { type: String, enum: ["completed", "withered"], required: true },
     coinsEarned: { type: Number, default: 0, min: 0 },
     treeId: { type: String, default: "teal" },
+    tag: { type: String, default: "Study", trim: true, maxlength: 30 },
     startedAt: { type: Date, default: Date.now },
     endedAt: { type: Date, default: Date.now },
   },

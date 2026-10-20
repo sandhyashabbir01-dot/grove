@@ -4,19 +4,28 @@ const authenticate = require("../middleware/auth");
 const router = express.Router();
 
 const PACKAGE_RE = /^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z0-9_]+)+$/; // e.g. com.whatsapp
+const DEFAULT_TAGS = ["Study", "Work", "Sport", "Rest", "Social", "Entertainment", "Other"];
 
 const view = (u) => ({
-  tags: u.tags,
-  whitelistApps: u.whitelistApps,
-  graceSeconds: u.graceSeconds,
+  tags: u.tags && u.tags.length ? u.tags : DEFAULT_TAGS,
+  whitelist: u.whitelistApps || [],
+  whitelistApps: u.whitelistApps || [],
+  graceSeconds: u.graceSeconds || 0,
+  dailyGoal: u.dailyGoal || 60,
+  realTrees: u.realTrees || 0,
 });
+
+// older accounts were created before tags existed
+function ensureTags(u) {
+  if (!u.tags || !u.tags.length) u.tags = [...DEFAULT_TAGS];
+}
 
 router.get("/", authenticate, (req, res) => res.json(view(req.user)));
 
-// Update the app whitelist and / or the grace period
+// Update the app whitelist, the grace period and / or the daily goal
 router.put("/", authenticate, async (req, res) => {
   try {
-    const { whitelistApps, graceSeconds } = req.body;
+    const { whitelistApps, graceSeconds, dailyGoal } = req.body;
 
     if (whitelistApps !== undefined) {
       if (!Array.isArray(whitelistApps) || whitelistApps.length > 30) {
@@ -34,6 +43,12 @@ router.put("/", authenticate, async (req, res) => {
       }
       req.user.graceSeconds = graceSeconds;
     }
+    if (dailyGoal !== undefined) {
+      if (!Number.isInteger(dailyGoal) || dailyGoal < 10 || dailyGoal > 600) {
+        return res.status(400).json({ message: "Daily goal must be between 10 and 600 minutes." });
+      }
+      req.user.dailyGoal = dailyGoal;
+    }
     await req.user.save();
     return res.json(view(req.user));
   } catch (error) {
@@ -45,9 +60,10 @@ router.put("/", authenticate, async (req, res) => {
 // Add a tag / category
 router.post("/tags", authenticate, async (req, res) => {
   try {
+    ensureTags(req.user);
     const name = typeof req.body.name === "string" ? req.body.name.trim() : "";
-    if (!name || name.length > 30) {
-      return res.status(400).json({ message: "Tag name must be 1 to 30 characters." });
+    if (!name || name.length > 24) {
+      return res.status(400).json({ message: "Tag name must be 1 to 24 characters." });
     }
     if (req.user.tags.length >= 12) {
       return res.status(400).json({ message: "You can have up to 12 tags." });
@@ -67,6 +83,7 @@ router.post("/tags", authenticate, async (req, res) => {
 // Delete a tag
 router.delete("/tags/:name", authenticate, async (req, res) => {
   try {
+    ensureTags(req.user);
     if (req.user.tags.length <= 1) {
       return res.status(400).json({ message: "Keep at least one tag." });
     }

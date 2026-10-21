@@ -96,4 +96,33 @@ router.delete("/tags/:name", authenticate, async (req, res) => {
   }
 });
 
+// ---- profile photo (small image sent as a data URL) ----
+const AVATAR_RE = /^data:image\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+
+router.put("/avatar", authenticate, async (req, res) => {
+  try {
+    const image = typeof req.body.image === "string" ? req.body.image : "";
+    if (image.length > 90000 || !AVATAR_RE.test(image)) {
+      return res.status(400).json({ message: "Please choose a smaller JPEG, PNG or WebP photo." });
+    }
+    req.user.avatar = image;
+    await req.user.save();
+    return res.json({ avatar: image });
+  } catch (error) {
+    console.error("Avatar error:", error.message);
+    return res.status(500).json({ message: "Could not save your photo." });
+  }
+});
+
+router.delete("/avatar", authenticate, async (req, res) => {
+  try {
+    req.user.avatar = "";
+    await req.user.save();
+    return res.json({ avatar: "" });
+  } catch (error) {
+    console.error("Avatar remove error:", error.message);
+    return res.status(500).json({ message: "Could not remove your photo." });
+  }
+});
+
 module.exports = router;

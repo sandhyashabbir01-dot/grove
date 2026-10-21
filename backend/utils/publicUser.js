@@ -8,6 +8,7 @@ module.exports = function publicUser(user) {
     email: user.email,
     coins: user.coins,
     provider: user.provider || "email",
+    avatar: user.avatar || "",
     unlockedTrees: user.unlockedTrees && user.unlockedTrees.length ? user.unlockedTrees : ["teal"],
     selectedTree: user.selectedTree || "teal",
     notificationsEnabled: user.notificationsEnabled !== false,

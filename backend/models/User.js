@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema(
     unlockedTrees: { type: [String], default: ["teal"] },
     selectedTree: { type: String, default: "teal" },
     notificationsEnabled: { type: Boolean, default: true },
+    avatar: { type: String, default: "" }, // small profile photo as a data URL (max ~90 KB)
 
     // settings / Time Guard / goals
     tags: {
